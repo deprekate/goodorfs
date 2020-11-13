@@ -104,7 +104,7 @@ class CDS:
 		"""Calculate entropy"""
 		counts = self.amino_acid_frequencies()
 		H = 0
-		for aa in list('ACDEFGHIKLMNPQRSTVW#+*Y'):
+		for aa in list('ACDEFGHIKLMNPQRSTVWY#+*'):
 			p = -counts[aa]*log(counts[aa]) if counts[aa] else 0
 			counts[aa] = p
 			H += p
