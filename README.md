@@ -7,6 +7,10 @@ It takes as input a fasta file representing the entire genome.  It then finds al
 
 To install `GOODORFS`,
 ```
+pip3 install goodorfs
+```
+or
+```
 git clone https://github.com/deprekate/goodorfs.git
 cd goodorfs
 python3 setup.py install
