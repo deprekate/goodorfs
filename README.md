@@ -3,7 +3,15 @@ Introduction
 
 GOODORFS is a tool to classify open reading frames into coding and noncoding
 
-It takes as input a fasta file representing the entire genome.  It then finds all potential open reading frames,  nd then for each, calculates the Energy Density Profile from the amino acid frequency.
+It takes as input a fasta file representing the entire genome.  It then finds all potential open reading frames, and then for each, calculates the Energy Density Profile from the amino acid frequency.
+
+To install `GOODORFS`,
+```
+git clone https://github.com/deprekate/goodorfs.git
+cd goodorfs
+python3 setup.py install
+
+```
 
 To run `GOODORFS` simply provide the path to a fasta file.  The default output is the same format as Glimmers LONGORFS program, in order to serve as a drop in replacement.
 The columns are: orf_id, start_location, stop_location, frame, a bunch of zeros as filler
