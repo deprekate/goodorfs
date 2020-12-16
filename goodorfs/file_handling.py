@@ -15,27 +15,17 @@ def pairwise(iterable):
 	return zip(a, a)
 
 def is_valid_file(x):
-	print(x)
-	exit()
 	if not os.path.exists(x):
 		raise argparse.ArgumentTypeError("{0} does not exist".format(x))
-	return x
-
-def is_writable_file(x):
-	fp = sys.stdout
-	try:
-		fp = open(x, "r+")
-	except IOError:
-		raise("ERROR: Could not open file")
 	return x
 
 def get_args():
 	usage = 'goodorfs.py [-opt1, [-opt2, ...]] infile outfile'
 	parser = argparse.ArgumentParser(description='GOODORFS: For finding and classifying open reading frames', formatter_class=RawTextHelpFormatter, usage=usage)
 
-	parser.add_argument('infile', type=is_valid_file, nargs=? help='input file in fasta format')
+	parser.add_argument('infile', type=is_valid_file, help='input file in fasta format')
 	#parser.add_argument('outfile', type=is_writable_file, help='output file')
-	#parser.add_argument('outfile', action="store", default=sys.stdout, type=argparse.FileType('w'), help='where to write the output [stdout]')
+	parser.add_argument('outfile', action="store", nargs='?', default=sys.stdout, type=argparse.FileType('w'), help='where to write the output [stdout]')
 
 	parser.add_argument('-Y', '--outtype', action="store", default="tsv", dest='outtype', help='format of the output [tsv]', choices=['tsv','edp','fna'])
 	parser.add_argument('-A', '--start_codons', action="store", default="ATG,GTG,TTG", dest='start_codons', help='comma separated list of start codons and frequency [ATG:0.85,GTG:0.10,TTG:0.05]')
