@@ -1,12 +1,13 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os
 import sys
 import getopt
 
-#from subprocess import Popen, PIPE, STDOUT
-from goodorfs_modules import file_handling
-from goodorfs_modules.features import Features
-from goodorfs_modules.functions import rev_comp
+sys.path.pop(0)
+
+from goodorfs import file_handling
+from goodorfs.features import Features
+from goodorfs.functions import rev_comp
 
 import numpy as np
 from sklearn.cluster import KMeans
@@ -43,9 +44,6 @@ for id, dna in contigs.items():
 
 	contig_features.parse_contig(id, dna)
 
-	sys.stderr.write("Sequence file = %s\n" % contig_features.infile) 
-	sys.stderr.write("Number of orfs = %i\n" % len(contig_features.cds)) 
-	sys.stderr.flush()
 
 	#-------------------------------Create the ORFs----------------------------------------------#
 	n_unique_orfs = 0
@@ -53,7 +51,8 @@ for id, dna in contigs.items():
 	Y = []
 	for orfs in contig_features.iter_orfs('half'):
 		for orf in orfs:
-			entropy = orf.amino_acid_entropies()
+			entropy = orf.amino_acid_frequencies()
+			#entropy = orf.amino_acid_entropies()
 			point = []
 			for aa in list('ARNDCEQGHILKMFPSTWYV#+*'):
 				point.append(entropy[aa])
@@ -64,7 +63,7 @@ for id, dna in contigs.items():
 
 	X = StandardScaler().fit_transform(X)
 
-	n_clust = 3 if n_unique_orfs<args.cutoff else 4
+	n_clust = args.kclusters #3 if n_unique_orfs<args.cutoff else 4
 
 
 	#-------------------------------Cluster the ORFs----------------------------------------------#
@@ -75,8 +74,10 @@ for id, dna in contigs.items():
 		if model.inertia_ < best.inertia_:
 			best = model
 	labels = best.predict(X)
-
+	
+	#print("len", len(X))
 	#print("mad", [np.mean(np.mad(X[labels==i,:-1], axis=0)) for i in range(n_clust)])
+	#print("inertia = ", best.inertia_)
 
 	#-------------------------------Pick the Best Cluster------------------------------------------#
 	cluster = lambda : None
@@ -93,24 +94,30 @@ for id, dna in contigs.items():
 				cluster.minima = i
 	
 	#-------------------------------Output the Best Cluster----------------------------------------#
+	sys.stderr.write("Sequence file = %s\n" % contig_features.infile) 
+	sys.stderr.write("Number of orfs = %i\n" % len(contig_features.cds)) 
+	sys.stderr.flush()
 	i = 1
 	seen = dict()
 	for label, orf in zip(labels, Y):
 		if label == cluster.idx or label == cluster.minima:
 			if orf.stop not in seen:
 				if args.outtype == 'fna':
-					sys.stdout.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
-					sys.stdout.write(orf.dna)
-					sys.stdout.write('\n')
+					args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
+					args.outfile.write(orf.dna)
+					args.outfile.write('\n')
 				elif args.outtype == 'edp':
 					pass
 				else:
-					sys.stdout.write(     str(i).rjust(5, '0'))
-					sys.stdout.write(orf.begin().rjust(8, ' '))
-					sys.stdout.write(  orf.end().rjust(8, ' '))
-					sys.stdout.write(  orf.frm().rjust(4, ' '))
-					sys.stdout.write('   0.000')
-					sys.stdout.write('\n')
+					if args.no_header:
+						args.outfile.write("Sequence file = %s\n" % contig_features.infile) 
+						args.outfile.write("Number of orfs = %i\n" % len(contig_features.cds)) 
+					args.outfile.write(     str(i).rjust(5, '0'))
+					args.outfile.write(orf.begin().rjust(8, ' '))
+					args.outfile.write(  orf.end().rjust(8, ' '))
+					args.outfile.write(  orf.frm().rjust(4, ' '))
+					args.outfile.write('   0.000')
+					args.outfile.write('\n')
 				i += 1
 				seen[orf.stop] = True
 
