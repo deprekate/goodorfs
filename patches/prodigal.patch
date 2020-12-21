@@ -1,0 +1,22 @@
+diff --git a/main.c b/main.c
+index 0834a07..206564c 100644
+--- a/main.c
++++ b/main.c
+@@ -31,7 +31,7 @@
+ #define VERSION "2.6.3"
+ #define DATE "February, 2016"
+ 
+-#define MIN_SINGLE_GENOME 20000
++#define MIN_SINGLE_GENOME 1
+ #define IDEAL_SINGLE_GENOME 100000
+ 
+ 
+@@ -386,7 +386,7 @@ int main(int argc, char *argv[]) {
+     if(quiet == 0) {
+       fprintf(stderr, "done!\n"); 
+     }
+-
++    for(i=ipath; i!=-1; i=nodes[i].traceb){ if(nodes[i].type!=STOP) printf("%i\n", nodes[i].stop_val+1 + 2*nodes[i].strand);}
+     /***********************************************************************
+       Gather dicodon statistics for the training set.  Score the entire set
+       of nodes.                               

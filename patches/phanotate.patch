@@ -1,0 +1,12 @@
+diff --git a/PHANOTATE/phanotate_modules/functions.py b/PHANOTATE-edit/phanotate_modules/functions.py
+index 8335507..c7f79b6 100644
+--- a/PHANOTATE/phanotate_modules/functions.py
++++ b/PHANOTATE-edit/phanotate_modules/functions.py
+@@ -261,6 +261,7 @@ def get_orfs(dna):
+ 	for orfs in my_orfs.iter_in():
+ 		for orf in orfs:
+ 			if(orf.start_codon() == 'ATG'):
++				print((lambda: orf.stop, lambda: orf.stop+2)[orf.frame > 0]())
+ 				start = orf.start
+ 				stop = orf.stop
+ 				if(start < stop):
