@@ -1,0 +1,27 @@
+diff --git a/scripts/g3-from-scratch.csh b/scripts/g3-from-scratch.csh
+index 3378c8c..b227cca 100755
+--- a/scripts/g3-from-scratch.csh
++++ b/scripts/g3-from-scratch.csh
+@@ -38,10 +38,10 @@ if  ($step != "")  goto $step
+ 
+ step1:
+ # Find long, non-overlapping orfs to use as a training set
+-echo "Step 1 of ${numsteps}:  Finding long orfs for training"
+-$glimmerpath/long-orfs -n -t 1.15 $genome $tag.longorfs
++echo "Step 1 of ${numsteps}:  Finding goodorfs for training"
++goodorfs.py -n $genome $tag.goodorfs
+ if  ($status != 0)  then
+-  echo "Failed to find long-orf training set"
++  echo "Failed to find goodorf training set"
+   exit
+ endif
+ if  ($onestep == "only")  exit
+@@ -50,7 +50,7 @@ if  ($onestep == "only")  exit
+ step2:
+ # Extract the training sequences from the genome file
+ echo "Step 2 of ${numsteps}:  Extracting training sequences"
+-$glimmerpath/extract -t $genome $tag.longorfs > $tag.train
++$glimmerpath/extract -t $genome $tag.goodorfs > $tag.train
+ if  ($status != 0)  then
+   echo "Failed to extract training sequences"
+   exit
