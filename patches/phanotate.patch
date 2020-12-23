@@ -1,7 +1,7 @@
-diff --git a/PHANOTATE/phanotate_modules/functions.py b/PHANOTATE-edit/phanotate_modules/functions.py
+diff --git a/phanotate_modules/functions.py b/phanotate_modules/functions.py
 index 8335507..c7f79b6 100644
---- a/PHANOTATE/phanotate_modules/functions.py
-+++ b/PHANOTATE-edit/phanotate_modules/functions.py
+--- a/phanotate_modules/functions.py
++++ b/phanotate_modules/functions.py
 @@ -261,6 +261,7 @@ def get_orfs(dna):
  	for orfs in my_orfs.iter_in():
  		for orf in orfs:
