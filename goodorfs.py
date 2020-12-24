@@ -38,6 +38,9 @@ if not contigs:
 #--------------------------------------------------------------------------------------------------#
 #                               MAIN ROUTINE                                                       #
 #--------------------------------------------------------------------------------------------------#
+n_unique_orfs = 0
+X = []
+Y = []
 for id, dna in contigs.items():
 	contig_features = Features(**vars(args))
 	#-------------------------------Find the ORFs--------------------------------------------------#
@@ -46,9 +49,6 @@ for id, dna in contigs.items():
 
 
 	#-------------------------------Create the ORFs----------------------------------------------#
-	n_unique_orfs = 0
-	X = []
-	Y = []
 	for orfs in contig_features.iter_orfs('half'):
 		for orf in orfs:
 			entropy = orf.amino_acid_frequencies()
@@ -61,63 +61,63 @@ for id, dna in contigs.items():
 			Y.append(orf)
 		n_unique_orfs += 1
 
-	X = StandardScaler().fit_transform(X)
+X = StandardScaler().fit_transform(X)
 
-	n_clust = args.kclusters #3 if n_unique_orfs<args.cutoff else 4
+n_clust = args.kclusters #3 if n_unique_orfs<args.cutoff else 4
 
 
-	#-------------------------------Cluster the ORFs----------------------------------------------#
-	best = lambda: None
-	best.inertia_ = float('+Inf')
-	for _ in range(1000):
-		model = KMeans(n_clusters=n_clust).fit(X)
-		if model.inertia_ < best.inertia_:
-			best = model
-	labels = best.predict(X)
-	
-	#print("len", len(X))
-	#print("mad", [np.mean(np.mad(X[labels==i,:-1], axis=0)) for i in range(n_clust)])
-	#print("inertia = ", best.inertia_)
+#-------------------------------Cluster the ORFs----------------------------------------------#
+best = lambda: None
+best.inertia_ = float('+Inf')
+for _ in range(1000):
+	model = KMeans(n_clusters=n_clust).fit(X)
+	if model.inertia_ < best.inertia_:
+		best = model
+labels = best.predict(X)
 
-	#-------------------------------Pick the Best Cluster------------------------------------------#
-	cluster = lambda : None
-	cluster.mad = float('+Inf')
-	cluster.minima = None
-	for i in range(n_clust):
-		mad = np.sum(np.mad(X[labels==i,:-1], axis=0)) 
-		unique_orfs = len({orf.stop:True for orf in np.array(Y)[labels==i]})
-		if mad < cluster.mad:
-			if unique_orfs / n_unique_orfs > 0.05 : 
-				cluster.mad = mad
-				cluster.idx = i	
+#print("len", len(X))
+#print("mad", [np.mean(np.mad(X[labels==i,:-1], axis=0)) for i in range(n_clust)])
+#print("inertia = ", best.inertia_)
+
+#-------------------------------Pick the Best Cluster------------------------------------------#
+cluster = lambda : None
+cluster.mad = float('+Inf')
+cluster.minima = None
+for i in range(n_clust):
+	mad = np.sum(np.mad(X[labels==i,:-1], axis=0)) 
+	unique_orfs = len({orf.stop:True for orf in np.array(Y)[labels==i]})
+	if mad < cluster.mad:
+		if unique_orfs / n_unique_orfs > 0.05 : 
+			cluster.mad = mad
+			cluster.idx = i	
+		else:
+			cluster.minima = i
+
+#-------------------------------Output the Best Cluster----------------------------------------#
+if args.outtype != 'fna' and args.no_header:
+	args.outfile.write("Sequence file = %s\n" % contig_features.infile) 
+	args.outfile.write("Number of orfs = %i\n" % len(contig_features.cds)) 
+
+i = 1
+seen = dict()
+for label, orf in zip(labels, Y):
+	if label == cluster.idx or label == cluster.minima:
+		if orf.stop not in seen:
+			if args.outtype == 'fna':
+				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
+				args.outfile.write(orf.dna)
+				args.outfile.write('\n')
+			elif args.outtype == 'edp':
+				pass
 			else:
-				cluster.minima = i
-	
-	#-------------------------------Output the Best Cluster----------------------------------------#
-	if args.outtype != 'fna' and args.no_header:
-		args.outfile.write("Sequence file = %s\n" % contig_features.infile) 
-		args.outfile.write("Number of orfs = %i\n" % len(contig_features.cds)) 
-
-	i = 1
-	seen = dict()
-	for label, orf in zip(labels, Y):
-		if label == cluster.idx or label == cluster.minima:
-			if orf.stop not in seen:
-				if args.outtype == 'fna':
-					args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
-					args.outfile.write(orf.dna)
-					args.outfile.write('\n')
-				elif args.outtype == 'edp':
-					pass
-				else:
-					args.outfile.write(     str(i).rjust(5, '0'))
-					args.outfile.write(orf.begin().rjust(8, ' '))
-					args.outfile.write(  orf.end().rjust(8, ' '))
-					args.outfile.write(  orf.frm().rjust(4, ' '))
-					args.outfile.write('   0.000')
-					args.outfile.write('\n')
-				i += 1
-				seen[orf.stop] = True
+				args.outfile.write(     str(i).rjust(5, '0'))
+				args.outfile.write(orf.begin().rjust(8, ' '))
+				args.outfile.write(  orf.end().rjust(8, ' '))
+				args.outfile.write(  orf.frm().rjust(4, ' '))
+				args.outfile.write('   0.000')
+				args.outfile.write('\n')
+			i += 1
+			seen[orf.stop] = True
 
 
 #--------------------------------------------------------------------------------------------------#
