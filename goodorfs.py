@@ -18,6 +18,11 @@ from sklearn.decomposition import PCA
 def mad(data, axis=None):
         return np.median(np.absolute(data - np.mean(data, axis)), axis)
 setattr(np, 'mad', mad)
+
+nucs = ['T', 'C', 'A', 'G']
+codons = [a+b+c for a in nucs for b in nucs for c in nucs]
+amino_acids = 'FFLLSSSSYY#+CC*WLLLLPPPPHHQQRRRRIIIMTTTTNNKKSSRRVVVVAAAADDEEGGGG'
+translate_codon = dict(zip(codons, amino_acids))
 #--------------------------------------------------------------------------------------------------#
 #                               ARGUMENTS                                                          #
 #--------------------------------------------------------------------------------------------------#
@@ -63,13 +68,13 @@ for id, dna in contigs.items():
 
 X = StandardScaler().fit_transform(X)
 
-n_clust = args.kclusters #3 if n_unique_orfs<args.cutoff else 4
+n_clust = 3 if n_unique_orfs<args.cutoff else 4
 
 
 #-------------------------------Cluster the ORFs----------------------------------------------#
 best = lambda: None
 best.inertia_ = float('+Inf')
-for _ in range(1000):
+for _ in range(100):
 	model = KMeans(n_clusters=n_clust).fit(X)
 	if model.inertia_ < best.inertia_:
 		best = model
@@ -106,6 +111,10 @@ for label, orf in zip(labels, Y):
 			if args.outtype == 'fna':
 				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
 				args.outfile.write(orf.dna)
+				args.outfile.write('\n')
+			elif args.outtype == 'faa':
+				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
+				args.outfile.write(orf.amino_acids())
 				args.outfile.write('\n')
 			elif args.outtype == 'edp':
 				pass

@@ -27,7 +27,7 @@ def get_args():
 	#parser.add_argument('outfile', type=is_writable_file, help='output file')
 	parser.add_argument('outfile', action="store", nargs='?', default=sys.stdout, type=argparse.FileType('w'), help='where to write the output [stdout]')
 
-	parser.add_argument('-Y', '--outtype', action="store", default="tsv", dest='outtype', help='format of the output [tsv]', choices=['tsv','edp','fna'])
+	parser.add_argument('-Y', '--outtype', action="store", default="tsv", dest='outtype', help='format of the output [tsv]', choices=['tsv','edp','fna', 'faa'])
 	parser.add_argument('-A', '--start_codons', action="store", default="ATG,GTG,TTG", dest='start_codons', help='comma separated list of start codons and frequency [ATG:0.85,GTG:0.10,TTG:0.05]')
 	parser.add_argument('-Z', '--stop_codons', action="store", default="TAG,TGA,TAA", dest='stop_codons', help='comma separated list of stop codons [TAG,TGA,TAA]')
 	parser.add_argument('-g', '--minlen', action="store", type=int, default=90, dest='min_orf_len', help='to store a variable')
