@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import io
 import sys
 import getopt
 
@@ -34,11 +35,11 @@ args = file_handling.get_args()
 #--------------------------------------------------------------------------------------------------#
 
 base_trans = str.maketrans('SBVDEFHIJKLMNOPQRUWXYZ','GGGAAAAAAAAAAAAAAAAAAA')
+
 contigs = file_handling.read_fasta(args.infile, base_trans)
 if not contigs:
 	sys.stdout.write("Error: no sequences found in infile\n")
 	sys.exit()
-
 
 #--------------------------------------------------------------------------------------------------#
 #                               MAIN ROUTINE                                                       #
@@ -46,24 +47,25 @@ if not contigs:
 n_unique_orfs = 0
 X = []
 Y = []
+Z = []
 for id, dna in contigs.items():
 	contig_features = Features(**vars(args))
 	#-------------------------------Find the ORFs--------------------------------------------------#
 
 	contig_features.parse_contig(id, dna)
 
-
 	#-------------------------------Create the ORFs----------------------------------------------#
 	for orfs in contig_features.iter_orfs('half'):
 		for orf in orfs:
-			entropy = orf.amino_acid_frequencies()
-			#entropy = orf.amino_acid_entropies()
+			#entropy = orf.amino_acid_frequencies()
+			entropy = orf.amino_acid_entropies()
 			point = []
 			for aa in list('ARNDCEQGHILKMFPSTWYV#+*'):
 				point.append(entropy[aa])
 			point.append( orf.length() / 3)
 			X.append(point)
 			Y.append(orf)
+			Z.append(id)
 		n_unique_orfs += 1
 
 X = StandardScaler().fit_transform(X)
@@ -74,7 +76,7 @@ n_clust = 3 if n_unique_orfs<args.cutoff else 4
 #-------------------------------Cluster the ORFs----------------------------------------------#
 best = lambda: None
 best.inertia_ = float('+Inf')
-for _ in range(100):
+for _ in range(1000):
 	model = KMeans(n_clusters=n_clust).fit(X)
 	if model.inertia_ < best.inertia_:
 		best = model
@@ -88,6 +90,7 @@ labels = best.predict(X)
 cluster = lambda : None
 cluster.mad = float('+Inf')
 cluster.minima = None
+cluster.per = None
 for i in range(n_clust):
 	mad = np.sum(np.mad(X[labels==i,:-1], axis=0)) 
 	unique_orfs = len({orf.stop:True for orf in np.array(Y)[labels==i]})
@@ -95,25 +98,27 @@ for i in range(n_clust):
 		if unique_orfs / n_unique_orfs > 0.05 : 
 			cluster.mad = mad
 			cluster.idx = i	
+			cluster.per = unique_orfs / n_unique_orfs
 		else:
 			cluster.minima = i
 
 #-------------------------------Output the Best Cluster----------------------------------------#
 if args.outtype != 'fna' and args.no_header:
 	args.outfile.write("Sequence file = %s\n" % contig_features.infile) 
-	args.outfile.write("Number of orfs = %i\n" % len(contig_features.cds)) 
+	#args.outfile.write("Lowest cluster percent = %s\n" % cluster.per) 
+	args.outfile.write("Number of orfs = %i\n" % n_unique_orfs) 
 
 i = 1
 seen = dict()
-for label, orf in zip(labels, Y):
+for label,orf,header in zip(labels, Y, Z):
 	if label == cluster.idx or label == cluster.minima:
 		if orf.stop not in seen:
 			if args.outtype == 'fna':
-				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
+				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (header, i, orf.begin(), orf.end()) )
 				args.outfile.write(orf.dna)
 				args.outfile.write('\n')
 			elif args.outtype == 'faa':
-				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (id, i, orf.begin(), orf.end()) )
+				args.outfile.write(">%s_orf%i [START=%s] [STOP=%s]\n" % (header, i, orf.begin(), orf.end()) )
 				args.outfile.write(orf.amino_acids())
 				args.outfile.write('\n')
 			elif args.outtype == 'edp':

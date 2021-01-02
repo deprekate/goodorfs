@@ -79,7 +79,7 @@ class CDS:
 		"""Calculate the amino acid frequency"""
 		aa = []
 		for i in range(0, self.length(), 3):
-			aa.append(self.parent.translate_codon[self.dna[i:i+3]])
+			aa.append(self.parent.translate_codon.get(self.dna[i:i+3], 'X'))
 		return "".join(aa)
 
 	def amino_acid_frequencies(self):

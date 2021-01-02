@@ -23,7 +23,7 @@ def get_args():
 	usage = 'goodorfs.py [-opt1, [-opt2, ...]] infile outfile'
 	parser = argparse.ArgumentParser(description='GOODORFS: For finding and classifying open reading frames', formatter_class=RawTextHelpFormatter, usage=usage)
 
-	parser.add_argument('infile', type=is_valid_file, help='input file in fasta format')
+	parser.add_argument('infile', type=is_valid_file, nargs='?', default=sys.stdin, help='input file in fasta format')
 	#parser.add_argument('outfile', type=is_writable_file, help='output file')
 	parser.add_argument('outfile', action="store", nargs='?', default=sys.stdout, type=argparse.FileType('w'), help='where to write the output [stdout]')
 
@@ -50,23 +50,25 @@ def get_args():
 	return args
 
 
-def read_fasta(filepath, base_trans=str.maketrans('','')):
+def read_fasta(fp, base_trans=str.maketrans('','')):
 	contigs_dict = dict()
 	name = ''
 	seq = ''
 
-	lib = gzip if filepath.endswith(".gz") else io
+	if not isinstance(fp, io.IOBase):
+		lib = gzip if fp.endswith(".gz") else io
+		fp = lib.open(fp, mode="r", encoding='UTF-8')
 
-	with lib.open(filepath, mode="rb") as f:
-		for line in f:
-			if line.startswith(b'>'):
-				contigs_dict[name] = seq
-				name = line[1:].decode("utf-8").split()[0]
-				seq = ''
-			else:
-				#seq += line.replace("\n", "").upper()
-				seq += line[:-1].decode("utf-8").upper()
-		contigs_dict[name] = seq.translate(base_trans)
+	#with lib.open(filepath, mode="rb") as f:
+	for line in fp:
+		if line.startswith('>'):
+			contigs_dict[name] = seq
+			name = line[1:].split()[0]
+			seq = ''
+		else:
+			#seq += line.replace("\n", "").upper()
+			seq += line[:-1].upper()
+	contigs_dict[name] = seq.translate(base_trans)
 
 	if '' in contigs_dict: del contigs_dict['']
 	return contigs_dict

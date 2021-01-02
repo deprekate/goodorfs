@@ -45,3 +45,10 @@ GTGCATGGCCACACCTTCCCGAATCATCATGGTAAACGTGCGTTTTCGCTCAACGTCAA...
 ...
 ```
 
+We have started testing GOODORFS to run on metagenomes. All that is needed is to bin reads according to their GC content and then run the bins through GOODROFS in batches in order to predict gene fragments within the reads. 
+
+We have added a script to group the reads according to gc content. It prints out batches of 500 reads separated by the null terminator character, which allows commands to be chained to xargs.  To run GOODORFS on the supplied sample metagenome (which is in FASTA file format), run the command:
+```
+python3 scripts/bin_reads.py tests/ERR5004783_part.fasta | xargs -0 -I {} sh -c "echo '{}' | ./goodorfs.py -Y fna"
+```
+
